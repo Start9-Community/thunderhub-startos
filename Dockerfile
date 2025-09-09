@@ -1,4 +1,4 @@
-FROM apotdevin/thunderhub:v0.13.32
+FROM apotdevin/thunderhub:v0.14.6
 
 RUN apk add --update --no-cache yq; \
     rm -f /var/cache/apk/*
