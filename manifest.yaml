@@ -3,7 +3,7 @@ title: ThunderHub
 version: 0.13.32
 release-notes: |
   * Upstream code update
-  * Full list of upstream changes available [here](https://github.com/apotdevin/thunderhub/compare/v0.13.31...v0.13.32)
+  * Full list of changes available [here](https://github.com/apotdevin/thunderhub/releases/tag/v0.14.6)
 license: MIT
 wrapper-repo: https://github.com/Start9Labs/thunderhub-startos
 upstream-repo: https://github.com/apotdevin/thunderhub
