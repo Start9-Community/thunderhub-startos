@@ -1,8 +1,8 @@
 import { VersionInfo, IMPOSSIBLE } from '@start9labs/start-sdk'
 import { rm } from 'fs/promises'
 
-export const v_0_13_32_1 = VersionInfo.of({
-  version: '0.13.32:1-alpha.0',
+export const v_0_14_6_1 = VersionInfo.of({
+  version: '0.14.6:1-alpha.0',
   releaseNotes: 'Revamped for StartOS 0.4.0',
   migrations: {
     up: async ({ effects }) => {

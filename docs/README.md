@@ -1,20 +1,18 @@
-# Instructions for ThunderHub on StartOS
+# ThunderHub
 
-This `/docs` folder is for service-specific documentation on StartOS.  
-Keep it minimal - usually just installation or usage instructions and a reference to the upstream project.
+## Configuration
 
-## What to include
+The Master Password setting will be the password you use to log into all the accounts you set up for ThunderHub.
+If you set an account-specific password, that will override the master password for that account.
 
-- Minimal instructions for using the service on StartOS
-- A link to upstream project documentation
-- (Optional) Screenshots or diagrams
-- (Optional) Extra notes such as backups, migrations, or FAQs
+ThunderHub's configuration will automatically load the settings for the LND node running on your StartOS server. However, it can also connect to an external LND node either via manual configuration or an [LNDConnect](https://github.com/LN-Zap/lndconnect/blob/master/lnd_connect_uri.md) URL.
 
-## Suggested structure
+## Limitations
 
-```
-docs/
-├─ README.md           ← minimal StartOS-specific how-to
-├─ assets/ (optional)  ← images, screenshots, diagrams
-└─ notes.md (optional) ← advanced usage or developer notes
-```
+- It is currently not possible to connect to external LND nodes on a ".onion" address.
+
+## Notes
+
+All of your funds and data reside within LND. ThunderHub is *just* an interface to interact with your LND node.
+As such, it is safe to uninstall and reinstall ThunderHub as you please without fear of loss. Additionally, to ensure 
+the safety of your funds, you must back up your LND node, not ThunderHub.
