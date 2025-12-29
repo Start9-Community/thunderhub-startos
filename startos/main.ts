@@ -9,6 +9,30 @@ export const main = sdk.setupMain(async ({ effects }) => {
    */
   console.info('[i] Starting ThunderHub!')
 
+  // Build mounts for the subcontainer
+  let mounts = sdk.Mounts.of().mountVolume({
+    volumeId: 'main',
+    subpath: null,
+    mountpoint: '/data',
+    readonly: false,
+  })
+
+  // Mount LND dependency (ThunderHub only supports LND)
+  mounts = mounts.mountDependency({
+    dependencyId: 'lnd',
+    volumeId: 'main',
+    subpath: null,
+    mountpoint: '/mnt/lnd',
+    readonly: true,
+  })
+
+  // Set environment variables for ThunderHub
+  const env: Record<string, string> = {
+    ACCOUNT_CONFIG_PATH: '/data/accounts.yaml',
+    PORT: uiPort.toString(),
+    NO_VERSION_CHECK: 'true',
+  }
+
   /**
    * ======================== Daemons ========================
    *
@@ -20,15 +44,13 @@ export const main = sdk.setupMain(async ({ effects }) => {
     subcontainer: await sdk.SubContainer.of(
       effects,
       { imageId: 'thunderhub' },
-      sdk.Mounts.of().mountVolume({
-        volumeId: 'main',
-        subpath: null,
-        mountpoint: '/data',
-        readonly: false,
-      }),
+      mounts,
       'thunderhub-sub',
     ),
-    exec: { command: sdk.useEntrypoint() },
+    exec: {
+      command: sdk.useEntrypoint(),
+      env,
+    },
     ready: {
       display: 'Web Interface',
       fn: () =>
