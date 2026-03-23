@@ -18,7 +18,7 @@ export const manifest = setupManifest({
   volumes: ['main'],
   images: {
     thunderhub: {
-      source: { dockerTag: 'apotdevin/thunderhub:v0.14.6' },
+      source: { dockerTag: 'apotdevin/thunderhub:v0.15.4' },
     },
   },
   dependencies: {
