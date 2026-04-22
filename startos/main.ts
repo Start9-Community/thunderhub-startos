@@ -1,5 +1,7 @@
+import { FileHelper } from '@start9labs/start-sdk'
+import { i18n } from './i18n'
 import { sdk } from './sdk'
-import { uiPort } from './utils'
+import { accountsPath, dataDir, lndMount, uiPort } from './utils'
 
 export const main = sdk.setupMain(async ({ effects }) => {
   /**
@@ -7,31 +9,38 @@ export const main = sdk.setupMain(async ({ effects }) => {
    *
    * In this section, we fetch any resources or run any desired preliminary commands.
    */
-  console.info('[i] Starting ThunderHub!')
+  console.info(i18n('Starting ThunderHub...'))
 
-  // Build mounts for the subcontainer
-  let mounts = sdk.Mounts.of().mountVolume({
-    volumeId: 'main',
-    subpath: null,
-    mountpoint: '/data',
-    readonly: false,
-  })
+  const mounts = sdk.Mounts.of()
+    .mountVolume({
+      volumeId: 'main',
+      subpath: null,
+      mountpoint: dataDir,
+      readonly: false,
+    })
+    .mountDependency({
+      dependencyId: 'lnd',
+      volumeId: 'main',
+      subpath: null,
+      mountpoint: lndMount,
+      readonly: true,
+    })
 
-  // Mount LND dependency (ThunderHub only supports LND)
-  mounts = mounts.mountDependency({
-    dependencyId: 'lnd',
-    volumeId: 'main',
-    subpath: null,
-    mountpoint: '/mnt/lnd',
-    readonly: true,
-  })
+  const thSub = await sdk.SubContainer.of(
+    effects,
+    { imageId: 'thunderhub' },
+    mounts,
+    'thunderhub-sub',
+  )
 
-  // Set environment variables for ThunderHub
-  const env: Record<string, string> = {
-    ACCOUNT_CONFIG_PATH: '/data/accounts.yaml',
-    PORT: uiPort.toString(),
-    NO_VERSION_CHECK: 'true',
-  }
+  // LND writes the admin macaroon only after wallet unlock. Register a reactive
+  // watch so main re-runs (and the daemon restarts with a valid account) when
+  // LND writes the file. Mirrors LND's own bitcoin rpccookie watch in main.ts.
+  await FileHelper.string(
+    `${thSub.rootfs}${lndMount}/data/chain/bitcoin/mainnet/admin.macaroon`,
+  )
+    .read()
+    .const(effects)
 
   /**
    * ======================== Daemons ========================
@@ -41,22 +50,25 @@ export const main = sdk.setupMain(async ({ effects }) => {
    * Each daemon defines its own health check, which can optionally be exposed to the user.
    */
   return sdk.Daemons.of(effects).addDaemon('primary', {
-    subcontainer: await sdk.SubContainer.of(
-      effects,
-      { imageId: 'thunderhub' },
-      mounts,
-      'thunderhub-sub',
-    ),
+    subcontainer: thSub,
     exec: {
       command: sdk.useEntrypoint(),
-      env,
+      // Upstream image runs as node (uid 1000). It must write /data/accounts.yaml
+      // (to persist hashed passwords) and read LND's root-owned admin.macaroon,
+      // so we override to root.
+      user: 'root',
+      env: {
+        ACCOUNT_CONFIG_PATH: accountsPath,
+        PORT: uiPort.toString(),
+        NO_VERSION_CHECK: 'true',
+      },
     },
     ready: {
-      display: 'Web Interface',
+      display: i18n('Web Interface'),
       fn: () =>
         sdk.healthCheck.checkPortListening(effects, uiPort, {
-          successMessage: 'The web interface is ready',
-          errorMessage: 'The web interface is not ready',
+          successMessage: i18n('The web interface is ready'),
+          errorMessage: i18n('The web interface is not ready'),
         }),
     },
     requires: [],

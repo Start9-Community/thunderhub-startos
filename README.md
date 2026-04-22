@@ -22,6 +22,7 @@
 - [Configuration Management](#configuration-management)
 - [Network Access and Interfaces](#network-access-and-interfaces)
 - [Dependencies](#dependencies)
+- [Actions](#actions)
 - [Backups and Restore](#backups-and-restore)
 - [Health Checks](#health-checks)
 - [Limitations and Differences](#limitations-and-differences)
@@ -34,7 +35,7 @@
 
 | Property | Value |
 |----------|-------|
-| Image | `apotdevin/thunderhub` (unmodified) |
+| Image | `apotdevin/thunderhub:v0.15.4` (unmodified) |
 | Architectures | x86_64, aarch64 |
 
 ---
@@ -58,14 +59,16 @@
 |------|----------|---------|
 | Installation | Docker or npm | Install from marketplace |
 | LND connection | Manual configuration | Auto-configured via dependency |
-| Authentication | Manual accounts.yaml | Pre-configured with default master password |
+| Authentication | Manual `accounts.yaml` | User-created master password |
 
 **First-run steps:**
 
-1. Install LND on StartOS
-2. Install ThunderHub from the marketplace
-3. Open the web UI and log in with the default master password (`thunderhub`)
-4. Change the master password after first login
+1. Install LND on StartOS.
+2. Install ThunderHub from the marketplace.
+3. A critical task prompts you to create your master password — run the **Create Master Password** action. A random password is generated and shown once.
+4. Open the web UI and log in with the retrieved master password.
+
+After initial setup, the action toggles to **Reset Master Password** and generates a new password on every invocation.
 
 ---
 
@@ -75,7 +78,7 @@
 
 | Setting | Default | Purpose |
 |---------|---------|---------|
-| `masterPassword` | `thunderhub` | Authentication password for all accounts |
+| `masterPassword` | Empty (set via action) | Authentication password for all accounts |
 | `accounts[0].serverUrl` | `lnd.startos:10009` | gRPC address of the local LND node |
 | `accounts[0].macaroonPath` | `/mnt/lnd/data/chain/bitcoin/mainnet/admin.macaroon` | Admin macaroon for LND auth |
 | `accounts[0].certificatePath` | `/mnt/lnd/tls.cert` | TLS certificate for LND connection |
@@ -102,9 +105,17 @@
 
 | Dependency | Required | Purpose |
 |------------|----------|---------|
-| LND | Optional | Lightning node to manage |
+| LND | Required | Lightning node to manage |
 
-ThunderHub is a UI-only service — it connects to LND for all Lightning operations. Without LND configured, the service will start but cannot manage any node.
+ThunderHub is a UI-only service — it connects to LND for all Lightning operations. LND must be installed and running before ThunderHub can start.
+
+---
+
+## Actions
+
+| Action | Purpose |
+|--------|---------|
+| Create/Reset Master Password | Generate (first run) or regenerate (subsequent runs) the password used to log into ThunderHub |
 
 ---
 
@@ -116,7 +127,7 @@ ThunderHub is a UI-only service — it connects to LND for all Lightning operati
 
 **Restore behavior:**
 
-- Configuration restored; ThunderHub reconnects to LND automatically
+- Configuration restored; ThunderHub reconnects to LND automatically.
 
 **Note:** ThunderHub stores no funds or critical data. All funds reside in LND. Back up LND, not ThunderHub.
 
@@ -132,9 +143,9 @@ ThunderHub is a UI-only service — it connects to LND for all Lightning operati
 
 ## Limitations and Differences
 
-1. **No external .onion LND connections** — cannot connect to LND nodes on Tor hidden services
-2. **Pre-configured accounts** — accounts.yaml is auto-generated for the local LND dependency
-3. **No custom actions** — all management is done through the web UI
+1. **No external .onion LND connections** — cannot connect to LND nodes on Tor hidden services.
+2. **Pre-configured account** — `accounts.yaml` is auto-generated for the local LND dependency.
+3. **Single action surface** — password retrieval is the only custom action; all other management is done through the web UI.
 
 ---
 
@@ -152,15 +163,16 @@ ThunderHub is a UI-only service — it connects to LND for all Lightning operati
 
 ```yaml
 package_id: thunderhub
-image: apotdevin/thunderhub
+image: apotdevin/thunderhub:v0.15.4
 architectures: [x86_64, aarch64]
 volumes:
   main: /data
 ports:
   ui: 3000
 dependencies:
-  lnd (optional)
-actions: []
+  lnd (required)
+actions:
+  - master-password
 health_checks:
   - ui: port_listening 3000
 backup_volumes:

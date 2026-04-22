@@ -1,27 +1,32 @@
-import { matches, FileHelper } from '@start9labs/start-sdk'
+import { FileHelper, z } from '@start9labs/start-sdk'
+import { sdk } from '../sdk'
+import { lndMount } from '../utils'
 
-const { object, string, array } = matches
+const serverUrl = 'lnd.startos:10009' as const
+const macaroonPath =
+  `${lndMount}/data/chain/bitcoin/mainnet/admin.macaroon` as const
+const certificatePath = `${lndMount}/tls.cert` as const
 
-const accountShape = object({
-  name: string,
-  serverUrl: string,
-  macaroonPath: string.optional(),
-  certificatePath: string.optional(),
-  macaroon: string.optional(),
-  certificate: string.optional(),
-  password: string.optional(),
+const defaultAccount = {
+  name: 'LND Node',
+  serverUrl,
+  macaroonPath,
+  certificatePath,
+} as const
+
+const accountShape = z.object({
+  name: z.string().catch(defaultAccount.name),
+  serverUrl: z.literal(serverUrl).catch(serverUrl),
+  macaroonPath: z.literal(macaroonPath).catch(macaroonPath),
+  certificatePath: z.literal(certificatePath).catch(certificatePath),
 })
 
-const shape = object({
-  masterPassword: string,
-  accounts: array(accountShape),
+const shape = z.object({
+  masterPassword: z.string().catch(''),
+  accounts: z.array(accountShape).catch([defaultAccount]),
 })
 
 export const accountsYaml = FileHelper.yaml(
-  {
-    volumeId: 'main',
-    subpath: '/accounts.yaml',
-  },
+  { base: sdk.volumes.main, subpath: '/accounts.yaml' },
   shape,
 )
-

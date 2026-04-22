@@ -1,4 +1,4 @@
-// Here we define any constants or functions that are shared by multiple components
-// throughout the package codebase. This file will be unnecessary for many packages.
-
 export const uiPort = 3000
+export const dataDir = '/data' as const
+export const lndMount = '/mnt/lnd' as const
+export const accountsPath = `${dataDir}/accounts.yaml` as const
