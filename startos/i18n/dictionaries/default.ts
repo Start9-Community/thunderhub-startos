@@ -14,11 +14,11 @@ const dict = {
   // init + actions
   'Create your ThunderHub master password': 6,
   'Create Master Password': 7,
-  'Reset Master Password': 12,
   'Create the master password used to log into ThunderHub': 8,
-  'Reset the master password used to log into ThunderHub': 13,
-  'Your ThunderHub master password is below': 9,
-  Success: 10,
+  'Reset Master Password': 9,
+  'Reset the master password used to log into ThunderHub': 10,
+  'Your ThunderHub master password is below': 11,
+  Success: 12,
 } as const
 
 /**

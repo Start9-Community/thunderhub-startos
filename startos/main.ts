@@ -1,4 +1,5 @@
 import { FileHelper } from '@start9labs/start-sdk'
+import { manifest as lndManifest } from 'lnd-startos/startos/manifest'
 import { i18n } from './i18n'
 import { sdk } from './sdk'
 import { accountsPath, dataDir, lndMount, uiPort } from './utils'
@@ -18,7 +19,7 @@ export const main = sdk.setupMain(async ({ effects }) => {
       mountpoint: dataDir,
       readonly: false,
     })
-    .mountDependency({
+    .mountDependency<typeof lndManifest>({
       dependencyId: 'lnd',
       volumeId: 'main',
       subpath: null,

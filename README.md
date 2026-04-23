@@ -35,7 +35,7 @@
 
 | Property | Value |
 |----------|-------|
-| Image | `apotdevin/thunderhub:v0.15.4` (unmodified) |
+| Image | `apotdevin/thunderhub` (unmodified) |
 | Architectures | x86_64, aarch64 |
 
 ---
@@ -163,7 +163,7 @@ ThunderHub is a UI-only service — it connects to LND for all Lightning operati
 
 ```yaml
 package_id: thunderhub
-image: apotdevin/thunderhub:v0.15.4
+image: apotdevin/thunderhub
 architectures: [x86_64, aarch64]
 volumes:
   main: /data
