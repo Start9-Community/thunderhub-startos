@@ -9,7 +9,6 @@ export const manifest = setupManifest({
   upstreamRepo: 'https://github.com/apotdevin/thunderhub',
   marketingUrl: 'https://www.thunderhub.io/',
   donationUrl: null,
-  docsUrls: ['https://github.com/apotdevin/thunderhub#readme'],
   description: { short, long },
   volumes: ['main'],
   images: {
