@@ -5,7 +5,7 @@ export const manifest = setupManifest({
   id: 'thunderhub',
   title: 'ThunderHub',
   license: 'MIT',
-  packageRepo: 'https://github.com/Start9Labs/thunderhub-startos',
+  packageRepo: 'https://github.com/Start9-Community/thunderhub-startos',
   upstreamRepo: 'https://github.com/apotdevin/thunderhub',
   marketingUrl: 'https://www.thunderhub.io/',
   donationUrl: null,
@@ -13,7 +13,7 @@ export const manifest = setupManifest({
   volumes: ['main'],
   images: {
     thunderhub: {
-      source: { dockerTag: 'apotdevin/thunderhub:0.15.4' },
+      source: { dockerTag: 'apotdevin/thunderhub:0.18.3' },
       arch: ['x86_64', 'aarch64'],
     },
   },
