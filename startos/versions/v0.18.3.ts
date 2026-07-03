@@ -2,13 +2,13 @@ import { VersionInfo, IMPOSSIBLE } from '@start9labs/start-sdk'
 import { rm } from 'fs/promises'
 
 export const v_0_18_3 = VersionInfo.of({
-  version: '0.18.3:1',
+  version: '0.18.3:2',
   releaseNotes: {
-    en_US: `- Internal updates (start-sdk 1.5.3)`,
-    es_ES: `- Actualizaciones internas (start-sdk 1.5.3)`,
-    de_DE: `- Interne Aktualisierungen (start-sdk 1.5.3)`,
-    pl_PL: `- Aktualizacje wewnętrzne (start-sdk 1.5.3)`,
-    fr_FR: `- Mises à jour internes (start-sdk 1.5.3)`,
+    en_US: 'Internal updates (start-sdk 2.0.x)',
+    es_ES: 'Actualizaciones internas (start-sdk 2.0.x)',
+    de_DE: 'Interne Aktualisierungen (start-sdk 2.0.x)',
+    pl_PL: 'Aktualizacje wewnętrzne (start-sdk 2.0.x)',
+    fr_FR: 'Mises à jour internes (start-sdk 2.0.x)',
   },
   migrations: {
     up: async ({ effects }) => {

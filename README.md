@@ -79,7 +79,7 @@ After initial setup, the action toggles to **Reset Master Password** and generat
 | Setting | Default | Purpose |
 |---------|---------|---------|
 | `masterPassword` | Empty (set via action) | Authentication password for all accounts |
-| `accounts[0].serverUrl` | `lnd.startos:10009` | gRPC address of the local LND node |
+| `accounts[0].serverUrl` | LND gRPC bridge address (auto-resolved) | gRPC address of the local LND node, resolved at runtime over the internal LXC bridge |
 | `accounts[0].macaroonPath` | `/mnt/lnd/data/chain/bitcoin/mainnet/admin.macaroon` | Admin macaroon for LND auth |
 | `accounts[0].certificatePath` | `/mnt/lnd/tls.cert` | TLS certificate for LND connection |
 

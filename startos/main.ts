@@ -1,5 +1,10 @@
 import { FileHelper } from '@start9labs/start-sdk'
+import {
+  gRPCHostId,
+  gRPCInterfaceId,
+} from 'lnd-startos/startos/interfaces'
 import { manifest as lndManifest } from 'lnd-startos/startos/manifest'
+import { accountsYaml, defaultAccount } from './fileModels/accounts.yaml'
 import { i18n } from './i18n'
 import { sdk } from './sdk'
 import { accountsPath, dataDir, lndMount, uiPort } from './utils'
@@ -27,18 +32,44 @@ export const main = sdk.setupMain(async ({ effects }) => {
       readonly: true,
     })
 
-  const thSub = await sdk.SubContainer.of(
+  const thSub = sdk.SubContainer.of(
     effects,
     { imageId: 'thunderhub' },
     mounts,
     'thunderhub-sub',
   )
 
+  // Resolve LND's gRPC endpoint on the LXC bridge (replaces the deprecated
+  // `lnd.startos:10009` DNS name) and write it into accounts.yaml so ThunderHub
+  // connects to the node. LND terminates its own TLS on this port.
+  const grpcHost = await sdk.host
+    .get(effects, { hostId: gRPCHostId, packageId: 'lnd' }, (host) => {
+      const iface =
+        host &&
+        Object.values(host.bindings)
+          .flatMap((b) => Object.values(b.interfaces))
+          .find((i) => i.id === gRPCInterfaceId)
+      const addr =
+        iface &&
+        iface.addressInfo.filter({
+          kind: 'bridge',
+          predicate: (h) => h.ssl && h.metadata.kind === 'ipv4',
+        }).hostnames[0]
+      return addr ? `${addr.hostname}:${addr.port}` : undefined
+    })
+    .const()
+
+  if (grpcHost)
+    await accountsYaml.merge(effects, {
+      accounts: [{ ...defaultAccount, serverUrl: grpcHost }],
+    })
+
   // LND writes the admin macaroon only after wallet unlock. Register a reactive
   // watch so main re-runs (and the daemon restarts with a valid account) when
   // LND writes the file. Mirrors LND's own bitcoin rpccookie watch in main.ts.
+  const rootfs = await thSub.rootfs
   await FileHelper.string(
-    `${thSub.rootfs}${lndMount}/data/chain/bitcoin/mainnet/admin.macaroon`,
+    `${rootfs}${lndMount}/data/chain/bitcoin/mainnet/admin.macaroon`,
   )
     .read()
     .const(effects)
