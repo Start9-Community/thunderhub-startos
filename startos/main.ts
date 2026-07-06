@@ -1,13 +1,15 @@
-import { FileHelper } from '@start9labs/start-sdk'
-import {
-  gRPCHostId,
-  gRPCInterfaceId,
-} from 'lnd-startos/startos/interfaces'
+import { gRPCHostId, gRPCPort } from 'lnd-startos/startos/interfaces'
 import { manifest as lndManifest } from 'lnd-startos/startos/manifest'
 import { accountsYaml, defaultAccount } from './fileModels/accounts.yaml'
 import { i18n } from './i18n'
 import { sdk } from './sdk'
-import { accountsPath, dataDir, lndMount, uiPort } from './utils'
+import {
+  accountsPath,
+  bridgeAddress,
+  dataDir,
+  lndMount,
+  uiPort,
+} from './utils'
 
 export const main = sdk.setupMain(async ({ effects }) => {
   /**
@@ -41,38 +43,23 @@ export const main = sdk.setupMain(async ({ effects }) => {
 
   // Resolve LND's gRPC endpoint on the LXC bridge (replaces the deprecated
   // `lnd.startos:10009` DNS name) and write it into accounts.yaml so ThunderHub
-  // connects to the node. LND terminates its own TLS on this port.
-  const grpcHost = await sdk.host
-    .get(effects, { hostId: gRPCHostId, packageId: 'lnd' }, (host) => {
-      const iface =
-        host &&
-        Object.values(host.bindings)
-          .flatMap((b) => Object.values(b.interfaces))
-          .find((i) => i.id === gRPCInterfaceId)
-      const addr =
-        iface &&
-        iface.addressInfo.filter({
-          kind: 'bridge',
-          predicate: (h) => h.ssl && h.metadata.kind === 'ipv4',
-        }).hostnames[0]
-      return addr ? `${addr.hostname}:${addr.port}` : undefined
-    })
-    .const()
+  // connects to the node. LND terminates its own TLS on this port. LND binds
+  // gRPC only after wallet unlock (the admin macaroon appears), so this
+  // resolves to the loopback placeholder until then and heals with one restart
+  // when the binding lands — no separate macaroon watch needed. A dead bridge
+  // address before unlock is just connection-refused, and null propagates on
+  // LND uninstall so ThunderHub reconfigures instead of dialing a stale port.
+  const grpcHost = await bridgeAddress(effects, {
+    packageId: 'lnd',
+    hostId: gRPCHostId,
+    internalPort: gRPCPort,
+  }).const()
 
-  if (grpcHost)
-    await accountsYaml.merge(effects, {
-      accounts: [{ ...defaultAccount, serverUrl: grpcHost }],
-    })
-
-  // LND writes the admin macaroon only after wallet unlock. Register a reactive
-  // watch so main re-runs (and the daemon restarts with a valid account) when
-  // LND writes the file. Mirrors LND's own bitcoin rpccookie watch in main.ts.
-  const rootfs = await thSub.rootfs
-  await FileHelper.string(
-    `${rootfs}${lndMount}/data/chain/bitcoin/mainnet/admin.macaroon`,
-  )
-    .read()
-    .const(effects)
+  await accountsYaml.merge(effects, {
+    accounts: [
+      { ...defaultAccount, serverUrl: grpcHost ?? `127.0.0.1:${gRPCPort}` },
+    ],
+  })
 
   /**
    * ======================== Daemons ========================
