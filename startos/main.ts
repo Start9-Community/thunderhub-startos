@@ -3,13 +3,7 @@ import { manifest as lndManifest } from 'lnd-startos/startos/manifest'
 import { accountsYaml, defaultAccount } from './fileModels/accounts.yaml'
 import { i18n } from './i18n'
 import { sdk } from './sdk'
-import {
-  accountsPath,
-  bridgeAddress,
-  dataDir,
-  lndMount,
-  uiPort,
-} from './utils'
+import { accountsPath, bridgeAddress, dataDir, lndMount, uiPort } from './utils'
 
 export const main = sdk.setupMain(async ({ effects }) => {
   /**
@@ -41,14 +35,13 @@ export const main = sdk.setupMain(async ({ effects }) => {
     'thunderhub-sub',
   )
 
-  // Resolve LND's gRPC endpoint on the LXC bridge (replaces the deprecated
-  // `lnd.startos:10009` DNS name) and write it into accounts.yaml so ThunderHub
-  // connects to the node. LND terminates its own TLS on this port. LND binds
-  // gRPC only after wallet unlock (the admin macaroon appears), so this
-  // resolves to the loopback placeholder until then and heals with one restart
-  // when the binding lands — no separate macaroon watch needed. A dead bridge
-  // address before unlock is just connection-refused, and null propagates on
-  // LND uninstall so ThunderHub reconfigures instead of dialing a stale port.
+  // Resolve LND's gRPC endpoint on the LXC bridge and write it into
+  // accounts.yaml so ThunderHub connects to the node. LND terminates its own
+  // TLS on this port. LND binds gRPC only after wallet unlock (the admin
+  // macaroon appears), so this stays null until then: serverUrl is left absent
+  // and heals with one restart when the binding lands — no separate macaroon
+  // watch needed. null also propagates on LND uninstall, dropping serverUrl so
+  // ThunderHub reconfigures instead of dialing a stale port.
   const grpcHost = await bridgeAddress(effects, {
     packageId: 'lnd',
     hostId: gRPCHostId,
@@ -56,9 +49,7 @@ export const main = sdk.setupMain(async ({ effects }) => {
   }).const()
 
   await accountsYaml.merge(effects, {
-    accounts: [
-      { ...defaultAccount, serverUrl: grpcHost ?? `127.0.0.1:${gRPCPort}` },
-    ],
+    accounts: [{ ...defaultAccount, serverUrl: grpcHost ?? undefined }],
   })
 
   /**
