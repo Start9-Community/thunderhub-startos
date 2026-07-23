@@ -1,7 +1,8 @@
 import { VersionGraph } from '@start9labs/start-sdk'
-import { v_0_18_3 } from './v0.18.3'
+import { current } from './current'
+import { v_0_18_4_0 } from './v0.18.4_0'
 
 export const versionGraph = VersionGraph.of({
-  current: v_0_18_3,
-  other: [],
+  current,
+  other: [v_0_18_4_0],
 })

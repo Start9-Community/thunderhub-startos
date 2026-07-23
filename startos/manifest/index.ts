@@ -13,17 +13,9 @@ export const manifest = setupManifest({
   volumes: ['main'],
   images: {
     thunderhub: {
-      source: { dockerTag: 'apotdevin/thunderhub:0.18.3' },
+      source: { dockerTag: 'apotdevin/thunderhub:0.18.4' },
       arch: ['x86_64', 'aarch64'],
     },
-  },
-  alerts: {
-    install: null,
-    update: null,
-    uninstall: null,
-    restore: null,
-    start: null,
-    stop: null,
   },
   dependencies: {
     lnd: {

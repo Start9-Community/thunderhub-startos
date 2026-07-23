@@ -26,4 +26,3 @@ export const depLndDescription = {
   pl_PL: 'Wymagane do zarządzania twoim węzłem Lightning',
   fr_FR: 'Nécessaire pour gérer votre nœud Lightning',
 }
-

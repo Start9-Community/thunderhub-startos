@@ -1,8 +1,9 @@
-import { FileHelper } from '@start9labs/start-sdk'
+import { gRPCHostId, gRPCPort } from 'lnd-startos/startos/interfaces'
 import { manifest as lndManifest } from 'lnd-startos/startos/manifest'
+import { accountsYaml, defaultAccount } from './fileModels/accounts.yaml'
 import { i18n } from './i18n'
 import { sdk } from './sdk'
-import { accountsPath, dataDir, lndMount, uiPort } from './utils'
+import { accountsPath, bridgeAddress, dataDir, lndMount, uiPort } from './utils'
 
 export const main = sdk.setupMain(async ({ effects }) => {
   /**
@@ -27,21 +28,29 @@ export const main = sdk.setupMain(async ({ effects }) => {
       readonly: true,
     })
 
-  const thSub = await sdk.SubContainer.of(
+  const thSub = sdk.SubContainer.of(
     effects,
     { imageId: 'thunderhub' },
     mounts,
     'thunderhub-sub',
   )
 
-  // LND writes the admin macaroon only after wallet unlock. Register a reactive
-  // watch so main re-runs (and the daemon restarts with a valid account) when
-  // LND writes the file. Mirrors LND's own bitcoin rpccookie watch in main.ts.
-  await FileHelper.string(
-    `${thSub.rootfs}${lndMount}/data/chain/bitcoin/mainnet/admin.macaroon`,
-  )
-    .read()
-    .const(effects)
+  // Resolve LND's gRPC endpoint on the LXC bridge and write it into
+  // accounts.yaml so ThunderHub connects to the node. LND terminates its own
+  // TLS on this port. LND binds gRPC only after wallet unlock (the admin
+  // macaroon appears), so this stays null until then: serverUrl is left absent
+  // and heals with one restart when the binding lands — no separate macaroon
+  // watch needed. null also propagates on LND uninstall, dropping serverUrl so
+  // ThunderHub reconfigures instead of dialing a stale port.
+  const grpcHost = await bridgeAddress(effects, {
+    packageId: 'lnd',
+    hostId: gRPCHostId,
+    internalPort: gRPCPort,
+  }).const()
+
+  await accountsYaml.merge(effects, {
+    accounts: [{ ...defaultAccount, serverUrl: grpcHost ?? undefined }],
+  })
 
   /**
    * ======================== Daemons ========================

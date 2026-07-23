@@ -2,21 +2,22 @@ import { FileHelper, z } from '@start9labs/start-sdk'
 import { sdk } from '../sdk'
 import { lndMount } from '../utils'
 
-const serverUrl = 'lnd.startos:10009' as const
 const macaroonPath =
   `${lndMount}/data/chain/bitcoin/mainnet/admin.macaroon` as const
 const certificatePath = `${lndMount}/tls.cert` as const
 
-const defaultAccount = {
+// serverUrl is LND's gRPC endpoint on the LXC bridge, resolved and written by
+// main.ts when LND's binding is available. It stays absent until then rather
+// than holding a fabricated address, so ThunderHub never dials a dead port.
+export const defaultAccount = {
   name: 'LND Node',
-  serverUrl,
   macaroonPath,
   certificatePath,
 } as const
 
 const accountShape = z.object({
   name: z.string().catch(defaultAccount.name),
-  serverUrl: z.literal(serverUrl).catch(serverUrl),
+  serverUrl: z.string().optional().catch(undefined),
   macaroonPath: z.literal(macaroonPath).catch(macaroonPath),
   certificatePath: z.literal(certificatePath).catch(certificatePath),
 })

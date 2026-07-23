@@ -14,7 +14,9 @@ export const getMasterPassword = sdk.Action.withoutInput(
         '') !== ''
 
     return {
-      name: hasPass ? i18n('Reset Master Password') : i18n('Create Master Password'),
+      name: hasPass
+        ? i18n('Reset Master Password')
+        : i18n('Create Master Password'),
       description: hasPass
         ? i18n('Reset the master password used to log into ThunderHub')
         : i18n('Create the master password used to log into ThunderHub'),
