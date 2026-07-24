@@ -3,7 +3,7 @@ import { manifest as lndManifest } from 'lnd-startos/startos/manifest'
 import { accountsYaml, defaultAccount } from './fileModels/accounts.yaml'
 import { i18n } from './i18n'
 import { sdk } from './sdk'
-import { accountsPath, bridgeAddress, dataDir, lndMount, uiPort } from './utils'
+import { accountsPath, dataDir, lndMount, uiPort } from './utils'
 
 export const main = sdk.setupMain(async ({ effects }) => {
   /**
@@ -42,11 +42,13 @@ export const main = sdk.setupMain(async ({ effects }) => {
   // and heals with one restart when the binding lands — no separate macaroon
   // watch needed. null also propagates on LND uninstall, dropping serverUrl so
   // ThunderHub reconfigures instead of dialing a stale port.
-  const grpcHost = await bridgeAddress(effects, {
-    packageId: 'lnd',
-    hostId: gRPCHostId,
-    internalPort: gRPCPort,
-  }).const()
+  const grpcHost = await sdk.host
+    .getBridgeAddress(effects, {
+      packageId: 'lnd',
+      hostId: gRPCHostId,
+      internalPort: gRPCPort,
+    })
+    .const()
 
   await accountsYaml.merge(effects, {
     accounts: [{ ...defaultAccount, serverUrl: grpcHost ?? undefined }],
