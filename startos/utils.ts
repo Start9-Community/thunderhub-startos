@@ -1,5 +1,3 @@
-import { sdk } from './sdk'
-
 export const uiPort = 3000
 export const dataDir = '/data' as const
 export const lndMount = '/mnt/lnd' as const
