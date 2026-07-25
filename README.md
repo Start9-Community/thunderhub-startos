@@ -33,19 +33,19 @@
 
 ## Image and Container Runtime
 
-| Property | Value |
-|----------|-------|
-| Image | `apotdevin/thunderhub` (unmodified) |
-| Architectures | x86_64, aarch64 |
+| Property      | Value                               |
+| ------------- | ----------------------------------- |
+| Image         | `apotdevin/thunderhub` (unmodified) |
+| Architectures | x86_64, aarch64                     |
 
 ---
 
 ## Volume and Data Layout
 
-| Volume | Mount Point | Purpose |
-|--------|-------------|---------|
-| `main` | `/data` | Configuration and persistent data |
-| (LND dependency) | `/mnt/lnd` | Read-only access to LND macaroon and TLS cert |
+| Volume           | Mount Point | Purpose                                       |
+| ---------------- | ----------- | --------------------------------------------- |
+| `main`           | `/data`     | Configuration and persistent data             |
+| (LND dependency) | `/mnt/lnd`  | Read-only access to LND macaroon and TLS cert |
 
 **Key paths on the `main` volume:**
 
@@ -55,11 +55,11 @@
 
 ## Installation and First-Run Flow
 
-| Step | Upstream | StartOS |
-|------|----------|---------|
-| Installation | Docker or npm | Install from marketplace |
-| LND connection | Manual configuration | Auto-configured via dependency |
-| Authentication | Manual `accounts.yaml` | User-created master password |
+| Step           | Upstream               | StartOS                        |
+| -------------- | ---------------------- | ------------------------------ |
+| Installation   | Docker or npm          | Install from marketplace       |
+| LND connection | Manual configuration   | Auto-configured via dependency |
+| Authentication | Manual `accounts.yaml` | User-created master password   |
 
 **First-run steps:**
 
@@ -76,36 +76,36 @@ After initial setup, the action toggles to **Reset Master Password** and generat
 
 ### accounts.yaml (auto-generated)
 
-| Setting | Default | Purpose |
-|---------|---------|---------|
-| `masterPassword` | Empty (set via action) | Authentication password for all accounts |
-| `accounts[0].serverUrl` | LND gRPC bridge address (auto-resolved) | gRPC address of the local LND node, resolved at runtime over the internal LXC bridge |
-| `accounts[0].macaroonPath` | `/mnt/lnd/data/chain/bitcoin/mainnet/admin.macaroon` | Admin macaroon for LND auth |
-| `accounts[0].certificatePath` | `/mnt/lnd/tls.cert` | TLS certificate for LND connection |
+| Setting                       | Default                                              | Purpose                                                                              |
+| ----------------------------- | ---------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `masterPassword`              | Empty (set via action)                               | Authentication password for all accounts                                             |
+| `accounts[0].serverUrl`       | LND gRPC bridge address (auto-resolved)              | gRPC address of the local LND node, resolved at runtime over the internal LXC bridge |
+| `accounts[0].macaroonPath`    | `/mnt/lnd/data/chain/bitcoin/mainnet/admin.macaroon` | Admin macaroon for LND auth                                                          |
+| `accounts[0].certificatePath` | `/mnt/lnd/tls.cert`                                  | TLS certificate for LND connection                                                   |
 
 ### Environment Variables (fixed)
 
-| Variable | Value | Purpose |
-|----------|-------|---------|
-| `ACCOUNT_CONFIG_PATH` | `/data/accounts.yaml` | Config file location |
-| `PORT` | `3000` | Web UI port |
-| `NO_VERSION_CHECK` | `true` | Disable upstream version checks |
+| Variable              | Value                 | Purpose                         |
+| --------------------- | --------------------- | ------------------------------- |
+| `ACCOUNT_CONFIG_PATH` | `/data/accounts.yaml` | Config file location            |
+| `PORT`                | `3000`                | Web UI port                     |
+| `NO_VERSION_CHECK`    | `true`                | Disable upstream version checks |
 
 ---
 
 ## Network Access and Interfaces
 
-| Interface | Port | Protocol | Purpose |
-|-----------|------|----------|---------|
-| Web UI | 3000 | HTTP | Node management dashboard |
+| Interface | Port | Protocol | Purpose                   |
+| --------- | ---- | -------- | ------------------------- |
+| Web UI    | 3000 | HTTP     | Node management dashboard |
 
 ---
 
 ## Dependencies
 
-| Dependency | Required | Purpose |
-|------------|----------|---------|
-| LND | Required | Lightning node to manage |
+| Dependency | Required | Purpose                  |
+| ---------- | -------- | ------------------------ |
+| LND        | Required | Lightning node to manage |
 
 ThunderHub is a UI-only service — it connects to LND for all Lightning operations. LND must be installed and running before ThunderHub can start.
 
@@ -113,8 +113,8 @@ ThunderHub is a UI-only service — it connects to LND for all Lightning operati
 
 ## Actions
 
-| Action | Purpose |
-|--------|---------|
+| Action                       | Purpose                                                                                       |
+| ---------------------------- | --------------------------------------------------------------------------------------------- |
 | Create/Reset Master Password | Generate (first run) or regenerate (subsequent runs) the password used to log into ThunderHub |
 
 ---
@@ -135,8 +135,8 @@ ThunderHub is a UI-only service — it connects to LND for all Lightning operati
 
 ## Health Checks
 
-| Check | Display Name | Method | Messages |
-|-------|--------------|--------|----------|
+| Check  | Display Name  | Method              | Messages          |
+| ------ | ------------- | ------------------- | ----------------- |
 | Web UI | Web Interface | Port 3000 listening | Ready / Not ready |
 
 ---
@@ -169,8 +169,7 @@ volumes:
   main: /data
 ports:
   ui: 3000
-dependencies:
-  lnd (required)
+dependencies: lnd (required)
 actions:
   - master-password
 health_checks:
@@ -179,5 +178,5 @@ backup_volumes:
   - main
 fixed_config:
   ACCOUNT_CONFIG_PATH: /data/accounts.yaml
-  NO_VERSION_CHECK: "true"
+  NO_VERSION_CHECK: 'true'
 ```
