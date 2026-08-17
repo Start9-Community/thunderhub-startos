@@ -4,13 +4,15 @@
 
 # ThunderHub on StartOS
 
-> **Upstream docs:** <https://github.com/apotdevin/thunderhub#readme>
->
 > Everything not listed in this document should behave the same as upstream
-> ThunderHub. If a feature, setting, or behavior is not mentioned here,
-> the upstream documentation is accurate and fully applicable.
+> ThunderHub. If a feature, setting, or behavior is not mentioned here, the
+> upstream documentation is accurate and fully applicable — see the
+> Documentation section of `instructions.md` for links.
 
-[ThunderHub](https://github.com/apotdevin/thunderhub) is an open-source LND node manager that lets you manage and monitor your Lightning node from any device or browser.
+[ThunderHub](https://github.com/apotdevin/thunderhub) is a web dashboard for an LND node: channels, payments, forwards, fees, and the tools to manage them. This package runs it against the LND on the same server, with the node account configured for you.
+
+- **Upstream repo:** <https://github.com/apotdevin/thunderhub>
+- **Wrapper repo:** <https://github.com/Start9-Community/thunderhub-startos>
 
 ---
 
@@ -18,144 +20,153 @@
 
 - [Image and Container Runtime](#image-and-container-runtime)
 - [Volume and Data Layout](#volume-and-data-layout)
-- [Installation and First-Run Flow](#installation-and-first-run-flow)
-- [Configuration Management](#configuration-management)
-- [Network Access and Interfaces](#network-access-and-interfaces)
+- [File Models](#file-models)
 - [Dependencies](#dependencies)
+- [Network Access and Interfaces](#network-access-and-interfaces)
+- [Installation and First-Run Flow](#installation-and-first-run-flow)
 - [Actions](#actions)
-- [Backups and Restore](#backups-and-restore)
+- [Tasks](#tasks)
 - [Health Checks](#health-checks)
+- [Backups and Restore](#backups-and-restore)
 - [Limitations and Differences](#limitations-and-differences)
-- [What Is Unchanged from Upstream](#what-is-unchanged-from-upstream)
 - [Quick Reference for AI Consumers](#quick-reference-for-ai-consumers)
 
 ---
 
 ## Image and Container Runtime
 
-| Property      | Value                               |
-| ------------- | ----------------------------------- |
-| Image         | `apotdevin/thunderhub` (unmodified) |
-| Architectures | x86_64, aarch64                     |
+One upstream image, consumed unmodified.
 
----
+| Property      | Value                      |
+| ------------- | -------------------------- |
+| Image         | `apotdevin/thunderhub`     |
+| Architectures | x86_64, aarch64            |
+| Command       | The image's own entrypoint |
+
+| Subcontainer     | Purpose                                  |
+| ---------------- | ---------------------------------------- |
+| `thunderhub-sub` | The only daemon — the one to `attach` to |
+
+**The daemon is run as root, overriding the image's own user**, and there are two concrete reasons: it has to write its accounts file to persist the hashed password, and it has to read LND's admin macaroon, which LND writes as root on the dependency mount.
 
 ## Volume and Data Layout
 
-| Volume           | Mount Point | Purpose                                       |
-| ---------------- | ----------- | --------------------------------------------- |
-| `main`           | `/data`     | Configuration and persistent data             |
-| (LND dependency) | `/mnt/lnd`  | Read-only access to LND macaroon and TLS cert |
+One volume, plus a read-only view of LND's.
 
-**Key paths on the `main` volume:**
+| Volume            | Mount Point | Purpose                              |
+| ----------------- | ----------- | ------------------------------------ |
+| `main`            | `/data`     | The accounts file                    |
+| LND's `main` (ro) | `/mnt/lnd`  | LND's certificate and admin macaroon |
 
-- `accounts.yaml` — ThunderHub account configuration (managed by StartOS)
+| Path            | Written by                         | Holds                                   |
+| --------------- | ---------------------------------- | --------------------------------------- |
+| `accounts.yaml` | `main`, the action, and ThunderHub | The login password and the node account |
 
----
+**There is very little state here.** ThunderHub is a view onto LND: channels, balances and history all live in the node, so this volume holds the account definition and the login credential and nothing else.
 
-## Installation and First-Run Flow
+**LND's credentials are read straight off the dependency mount**, not copied — so a rotated certificate is picked up without any copy step going stale.
 
-| Step           | Upstream               | StartOS                        |
-| -------------- | ---------------------- | ------------------------------ |
-| Installation   | Docker or npm          | Install from marketplace       |
-| LND connection | Manual configuration   | Auto-configured via dependency |
-| Authentication | Manual `accounts.yaml` | User-created master password   |
+## File Models
 
-**First-run steps:**
+One model, and it is co-owned.
 
-1. Install LND on StartOS.
-2. Install ThunderHub from the marketplace.
-3. A critical task prompts you to create your master password — run the **Create Master Password** action. A random password is generated and shown once.
-4. Open the web UI and log in with the retrieved master password.
+| File            | Format | Modelled                | Written by                                |
+| --------------- | ------ | ----------------------- | ----------------------------------------- |
+| `accounts.yaml` | YAML   | Yes — `FileHelper.yaml` | `main`, the action, and ThunderHub itself |
 
-After initial setup, the action toggles to **Reset Master Password** and generates a new password on every invocation.
+Two fields matter:
 
----
+- **The master password**, which is the login. ThunderHub replaces the plaintext value with a hash of it once it has read it, which is why the application counts as a writer of this file.
+- **The node account**, whose certificate and macaroon paths are `z.literal(...).catch(...)` — **repaired on read**, because they can only ever be the mount points of the LND dependency.
 
-## Configuration Management
+**LND's gRPC address is resolved at start and written in**, over the internal bridge, where LND's own TLS is terminated. **While it is unresolved the field is left absent** rather than filled with a placeholder, so ThunderHub does not dial a dead port.
 
-### accounts.yaml (auto-generated)
-
-| Setting                       | Default                                              | Purpose                                                                              |
-| ----------------------------- | ---------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| `masterPassword`              | Empty (set via action)                               | Authentication password for all accounts                                             |
-| `accounts[0].serverUrl`       | LND gRPC bridge address (auto-resolved)              | gRPC address of the local LND node, resolved at runtime over the internal LXC bridge |
-| `accounts[0].macaroonPath`    | `/mnt/lnd/data/chain/bitcoin/mainnet/admin.macaroon` | Admin macaroon for LND auth                                                          |
-| `accounts[0].certificatePath` | `/mnt/lnd/tls.cert`                                  | TLS certificate for LND connection                                                   |
-
-### Environment Variables (fixed)
-
-| Variable              | Value                 | Purpose                         |
-| --------------------- | --------------------- | ------------------------------- |
-| `ACCOUNT_CONFIG_PATH` | `/data/accounts.yaml` | Config file location            |
-| `PORT`                | `3000`                | Web UI port                     |
-| `NO_VERSION_CHECK`    | `true`                | Disable upstream version checks |
-
----
-
-## Network Access and Interfaces
-
-| Interface | Port | Protocol | Purpose                   |
-| --------- | ---- | -------- | ------------------------- |
-| Web UI    | 3000 | HTTP     | Node management dashboard |
-
----
+That absence is the normal state on a fresh install, and it heals by itself: **LND publishes its gRPC binding only once its wallet has first been unlocked**, and the reactive read restarts ThunderHub with the real address as soon as it appears. Uninstalling LND propagates the same way — the field is dropped rather than left stale.
 
 ## Dependencies
 
-| Dependency | Required | Purpose                  |
-| ---------- | -------- | ------------------------ |
-| LND        | Required | Lightning node to manage |
+One, and it is required.
 
-ThunderHub is a UI-only service — it connects to LND for all Lightning operations. LND must be installed and running before ThunderHub can start.
+| Dependency | Required | Health checks required | Mounted                         | Why             |
+| ---------- | -------- | ---------------------- | ------------------------------- | --------------- |
+| LND        | Yes      | `lnd`                  | `main`, read-only at `/mnt/lnd` | The node itself |
 
----
+**This package uses LND's admin macaroon.** ThunderHub opens and closes channels, pays invoices, and changes fee policy — so access to this service is operational control of your node and the ability to move funds.
+
+## Network Access and Interfaces
+
+One interface.
+
+| Interface | Id   | Type | Port | Description              |
+| --------- | ---- | ---- | ---- | ------------------------ |
+| Web UI    | `ui` | ui   | 3000 | The ThunderHub dashboard |
+
+Bound on the `ui-multi` MultiHost over HTTP and not masked. **ThunderHub's own master password gates it**, and StartOS adds no gate of its own.
+
+Given what the macaroon allows, treat that password as a wallet credential rather than a dashboard login.
+
+## Installation and First-Run Flow
+
+Install seeds the accounts file and raises a `critical` task: create the master password.
+
+**The service cannot start until it exists**, so there is no window in which a dashboard with spending authority is reachable without a credential.
+
+**LND must be running, and its wallet unlocked at least once**, before ThunderHub can connect. Installed before LND is fine — the address is filled in and the service restarts on its own when the binding appears.
+
+Version checking against upstream is turned off by the package, so the interface does not nag about a version the package controls.
 
 ## Actions
 
-| Action                       | Purpose                                                                                       |
-| ---------------------------- | --------------------------------------------------------------------------------------------- |
-| Create/Reset Master Password | Generate (first run) or regenerate (subsequent runs) the password used to log into ThunderHub |
+One action.
 
----
+### Create Master Password
 
-## Backups and Restore
+Generates the login password and shows it once. The name changes to **Reset Master Password** once one exists.
 
-**Included in backup:**
+- **What it changes:** the password in the accounts file.
+- **Cost:** the service restarts.
+- **Repeat safety:** each run generates a **new** password and invalidates the old one. It is never user-chosen.
+- **Runnable at any status**, including stopped — which is how the install-time task is completed.
 
-- `main` volume — accounts configuration
+**The stored value is replaced by a hash** the first time ThunderHub reads it, so it cannot be recovered from the file afterwards. Save it when it is shown.
 
-**Restore behavior:**
+## Tasks
 
-- Configuration restored; ThunderHub reconnects to LND automatically.
+One, and it is reactive.
 
-**Note:** ThunderHub stores no funds or critical data. All funds reside in LND. Back up LND, not ThunderHub.
+| Task                   | Severity   | Raised when                     | Cleared when    |
+| ---------------------- | ---------- | ------------------------------- | --------------- |
+| Create Master Password | `critical` | Any init that finds no password | The action runs |
 
----
+`critical` blocks the service from starting and suspends the ordinary controls, so a fresh install shows the task and nothing else.
 
 ## Health Checks
 
-| Check  | Display Name  | Method              | Messages          |
-| ------ | ------------- | ------------------- | ----------------- |
-| Web UI | Web Interface | Port 3000 listening | Ready / Not ready |
+One check, on the only daemon.
 
----
+| Check     | Displayed as    | Method                 |
+| --------- | --------------- | ---------------------- |
+| `primary` | "Web Interface" | Port 3000 is listening |
+
+It reports that the dashboard is serving. **It says nothing about LND**: an unresolved address, a locked wallet, or a node that stopped answering all show a green check and an error inside the interface.
+
+## Backups and Restore
+
+The `main` volume is copied wholesale — `sdk.Backups.ofVolumes('main')`. In practice that is one file: the accounts definition and the hashed login password.
+
+**Nothing here is a wallet.** The macaroon and the certificate belong to LND and are read from its mount, not copied — so this backup grants no access on its own.
+
+A restored instance comes back with the same login and re-resolves LND's address on the new server. It needs LND present and unlocked before it shows anything.
 
 ## Limitations and Differences
 
-1. **No external .onion LND connections** — cannot connect to LND nodes on Tor hidden services.
-2. **Pre-configured account** — `accounts.yaml` is auto-generated for the local LND dependency.
-3. **Single action surface** — password retrieval is the only custom action; all other management is done through the web UI.
-
----
-
-## What Is Unchanged from Upstream
-
-- Full LND node management (channels, payments, routing, balances)
-- Wallet operations
-- Channel management and monitoring
-- Forward report and routing analysis
-- All web UI features and dashboards
+1. **The admin macaroon is required**, so access to this dashboard is spending control of your node.
+2. **One node, one account.** The package configures a single LND account and pins its credential paths.
+3. **The password can be reset but not chosen**, and it is stored hashed after first use.
+4. **A locked LND means an empty dashboard.** The gRPC binding does not exist until the wallet has been unlocked once.
+5. **The daemon runs as root**, overriding the image's user, to write its accounts file and read the macaroon.
+6. **Mainnet only.** The macaroon path is pinned to Bitcoin mainnet.
+7. **Upstream version checking is disabled.**
 
 ---
 
@@ -164,19 +175,27 @@ ThunderHub is a UI-only service — it connects to LND for all Lightning operati
 ```yaml
 package_id: thunderhub
 image: apotdevin/thunderhub
-architectures: [x86_64, aarch64]
+architectures:
+  - x86_64
+  - aarch64
+subcontainers:
+  - thunderhub-sub # runs as root, overriding the image's node user
 volumes:
-  main: /data
-ports:
-  ui: 3000
-dependencies: lnd (required)
+  main: /data # accounts.yaml only; LND's main is read-only at /mnt/lnd
+file_models:
+  - accounts.yaml # masterPassword + the LND account; co-owned with the app
+startos_managed_env_vars:
+  - ACCOUNT_CONFIG_PATH
+  - PORT
+  - NO_VERSION_CHECK
+dependencies:
+  - lnd # required, kind: running, healthChecks: [lnd], admin macaroon via a read-only mount
+interfaces:
+  ui: { type: ui, port: 3000 } # ThunderHub's own master password; no gate added by StartOS
 actions:
-  - master-password
+  - master-password # name flips between Create and Reset
+tasks:
+  - { action: master-password, severity: critical } # reactive
 health_checks:
-  - ui: port_listening 3000
-backup_volumes:
-  - main
-fixed_config:
-  ACCOUNT_CONFIG_PATH: /data/accounts.yaml
-  NO_VERSION_CHECK: 'true'
+  - primary # displayed "Web Interface"; says nothing about LND
 ```
