@@ -105,6 +105,8 @@ Bound on the `ui-multi` MultiHost over HTTP and not masked. **ThunderHub's own m
 
 Given what the macaroon allows, treat that password as a wallet credential rather than a dashboard login.
 
+The StartOS 0.3.5 package's `main` host is retired on update, so its port is freed. None of its addresses are carried over to `ui-multi`.
+
 ## Installation and First-Run Flow
 
 Install seeds the accounts file and raises a `critical` task: create the master password.
@@ -124,8 +126,9 @@ One action.
 Generates the login password and shows it once. The name changes to **Reset Master Password** once one exists.
 
 - **What it changes:** the password in the accounts file.
-- **Cost:** the service restarts.
+- **When it takes effect:** immediately. ThunderHub reads the accounts file only at startup, so the action restarts it if it is running.
 - **Repeat safety:** each run generates a **new** password and invalidates the old one. It is never user-chosen.
+- **Confirmation:** when a password already exists, StartOS shows a warning and asks before replacing it. The first run, from the install task, does not prompt.
 - **Runnable at any status**, including stopped — which is how the install-time task is completed.
 
 **The stored value is replaced by a hash** the first time ThunderHub reads it, so it cannot be recovered from the file afterwards. Save it when it is shown.

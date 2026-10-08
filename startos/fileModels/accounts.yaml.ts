@@ -20,14 +20,14 @@ export const defaultAccount = {
 // the package were its only author. The two path fields are z.literal pins to
 // the LND mount -- they can only ever be those paths, and a hand edit is
 // repaired on read.
-const accountShape = z.object({
+const accountShape = z.looseObject({
   name: z.string().catch(defaultAccount.name),
   serverUrl: z.string().optional().catch(undefined),
   macaroonPath: z.literal(macaroonPath).catch(macaroonPath),
   certificatePath: z.literal(certificatePath).catch(certificatePath),
 })
 
-const shape = z.object({
+const shape = z.looseObject({
   masterPassword: z.string().catch(''),
   accounts: z.array(accountShape).catch([defaultAccount]),
 })

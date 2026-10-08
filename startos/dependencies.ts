@@ -1,9 +1,15 @@
+import { depLndDescription } from './manifest/i18n'
 import { sdk } from './sdk'
 
-export const setDependencies = sdk.setupDependencies(async ({ effects }) => ({
-  lnd: {
-    kind: 'running',
-    versionRange: '>=0.21.1-beta:4',
-    healthChecks: ['lnd'],
+const lnd = sdk.Dependency.required('lnd', {
+  description: depLndDescription,
+  metadata: {
+    title: 'LND',
+    icon: 'https://raw.githubusercontent.com/Start9Labs/lnd-startos/refs/heads/master/icon.svg',
   },
-}))
+  versionRange: '>=0.21.1-beta:4',
+  kind: 'running',
+  healthChecks: ['lnd'],
+})
+
+export const dependencies = sdk.Dependencies.of().addDependency(lnd)

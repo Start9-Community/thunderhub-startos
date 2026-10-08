@@ -20,7 +20,11 @@ export const getMasterPassword = sdk.Action.withoutInput(
       description: hasPass
         ? i18n('Reset the master password used to log into ThunderHub')
         : i18n('Create the master password used to log into ThunderHub'),
-      warning: null,
+      warning: hasPass
+        ? i18n(
+            'Replaces the current ThunderHub master password with a newly generated one. ThunderHub restarts and the old password stops working.',
+          )
+        : null,
       allowedStatuses: 'any',
       group: null,
       visibility: 'enabled',
@@ -35,6 +39,7 @@ export const getMasterPassword = sdk.Action.withoutInput(
     })
 
     await accountsYaml.merge(effects, { masterPassword })
+    await effects.restart()
 
     return {
       version: '1',
