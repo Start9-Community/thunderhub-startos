@@ -19,6 +19,7 @@ const dict = {
   'Reset the master password used to log into ThunderHub': 10,
   'Your ThunderHub master password is below': 11,
   Success: 12,
+  'Replaces the current ThunderHub master password with a newly generated one. ThunderHub restarts and the old password stops working.': 13,
 } as const
 
 /**

@@ -27,4 +27,4 @@ The **Web UI** opens directly to ThunderHub's login screen. Enter the master pas
 
 ### Actions
 
-- **Create Master Password** / **Reset Master Password** — generates a new random master password for the web UI and shows it once. The action is named "Create" on first run and "Reset" on every run after that; use Reset to rotate the password or recover access if you've lost it.
+- **Create Master Password** / **Reset Master Password** — generates a new random master password for the web UI and shows it once. The action is named "Create" on first run and "Reset" on every run after that; use Reset to rotate the password or recover access if you've lost it. Reset asks you to confirm before it replaces the existing password, and ThunderHub restarts so the new password takes effect immediately.

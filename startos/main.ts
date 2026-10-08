@@ -50,8 +50,13 @@ export const main = sdk.setupMain(async ({ effects }) => {
     })
     .const()
 
+  const [first, ...rest] =
+    (await accountsYaml.read((a) => a.accounts).once()) ?? []
   await accountsYaml.merge(effects, {
-    accounts: [{ ...defaultAccount, serverUrl: grpcHost ?? undefined }],
+    accounts: [
+      { ...first, ...defaultAccount, serverUrl: grpcHost ?? undefined },
+      ...rest,
+    ],
   })
 
   /**

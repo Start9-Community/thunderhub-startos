@@ -15,6 +15,7 @@ export default {
     10: 'Restablecer la contraseña maestra usada para iniciar sesión en ThunderHub',
     11: 'Tu contraseña maestra de ThunderHub está a continuación',
     12: 'Éxito',
+    13: 'Reemplaza la contraseña maestra actual de ThunderHub por una nueva generada. ThunderHub se reinicia y la contraseña anterior deja de funcionar.',
   } satisfies LangDict,
   de_DE: {
     0: 'ThunderHub wird gestartet...',
@@ -30,6 +31,7 @@ export default {
     10: 'Setze das Master-Passwort für die Anmeldung bei ThunderHub zurück',
     11: 'Dein ThunderHub-Master-Passwort wird unten angezeigt',
     12: 'Erfolg',
+    13: 'Ersetzt das aktuelle ThunderHub-Master-Passwort durch ein neu generiertes. ThunderHub startet neu, und das alte Passwort funktioniert nicht mehr.',
   } satisfies LangDict,
   pl_PL: {
     0: 'Uruchamianie ThunderHub...',
@@ -45,6 +47,7 @@ export default {
     10: 'Zresetuj główne hasło używane do logowania do ThunderHub',
     11: 'Twoje główne hasło ThunderHub jest poniżej',
     12: 'Sukces',
+    13: 'Zastępuje obecne główne hasło ThunderHub nowo wygenerowanym. ThunderHub uruchamia się ponownie, a stare hasło przestaje działać.',
   } satisfies LangDict,
   fr_FR: {
     0: 'Démarrage de ThunderHub...',
@@ -60,5 +63,6 @@ export default {
     10: 'Réinitialiser le mot de passe maître utilisé pour se connecter à ThunderHub',
     11: 'Votre mot de passe maître ThunderHub est ci-dessous',
     12: 'Succès',
+    13: "Remplace le mot de passe maître actuel de ThunderHub par un nouveau mot de passe généré. ThunderHub redémarre et l'ancien mot de passe cesse de fonctionner.",
   } satisfies LangDict,
 } as Record<string, LangDict>
