@@ -51,6 +51,7 @@ export const getMasterPassword = sdk.Action.withoutInput(
         masked: true,
         copyable: true,
         qr: false,
+        launchable: false,
       },
     }
   },
