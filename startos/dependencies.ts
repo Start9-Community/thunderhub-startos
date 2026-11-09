@@ -7,7 +7,7 @@ const lnd = sdk.Dependency.required('lnd', {
     title: 'LND',
     icon: 'https://raw.githubusercontent.com/Start9Labs/lnd-startos/refs/heads/master/icon.svg',
   },
-  versionRange: '>=0.21.1-beta:4',
+  versionRange: '>=0.21.6-beta:3',
   kind: 'running',
   healthChecks: ['lnd'],
 })

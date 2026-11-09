@@ -53,10 +53,10 @@ One upstream image, consumed unmodified.
 
 One volume, plus a read-only view of LND's.
 
-| Volume            | Mount Point | Purpose                              |
-| ----------------- | ----------- | ------------------------------------ |
-| `main`            | `/data`     | The accounts file                    |
-| LND's `main` (ro) | `/mnt/lnd`  | LND's certificate and admin macaroon |
+| Volume                    | Mount Point | Purpose                                             |
+| ------------------------- | ----------- | --------------------------------------------------- |
+| `main`                    | `/data`     | The accounts file                                   |
+| LND's `public/admin` (ro) | `/mnt/lnd`  | LND's `tls.cert` and `admin.macaroon`, nothing else |
 
 | Path            | Written by                         | Holds                                   |
 | --------------- | ---------------------------------- | --------------------------------------- |
@@ -87,9 +87,9 @@ That absence is the normal state on a fresh install, and it heals by itself: **L
 
 One, and it is required.
 
-| Dependency | Required | Health checks required | Mounted                         | Why             |
-| ---------- | -------- | ---------------------- | ------------------------------- | --------------- |
-| LND        | Yes      | `lnd`                  | `main`, read-only at `/mnt/lnd` | The node itself |
+| Dependency | Required | Health checks required | Mounted                                 | Why             |
+| ---------- | -------- | ---------------------- | --------------------------------------- | --------------- |
+| LND        | Yes      | `lnd`                  | `public/admin`, read-only at `/mnt/lnd` | The node itself |
 
 **This package uses LND's admin macaroon.** ThunderHub opens and closes channels, pays invoices, and changes fee policy — so access to this service is operational control of your node and the ability to move funds.
 
@@ -168,7 +168,7 @@ A restored instance comes back with the same login and re-resolves LND's address
 3. **The password can be reset but not chosen**, and it is stored hashed after first use.
 4. **A locked LND means an empty dashboard.** The gRPC binding does not exist until the wallet has been unlocked once.
 5. **The daemon runs as root**, overriding the image's user, to write its accounts file and read the macaroon.
-6. **Mainnet only.** The macaroon path is pinned to Bitcoin mainnet.
+6. **Mainnet only.** The macaroon is the one LND publishes in its `admin` tier, which is its Bitcoin mainnet macaroon.
 7. **Upstream version checking is disabled.**
 
 ---
@@ -184,7 +184,7 @@ architectures:
 subcontainers:
   - thunderhub-sub # runs as root, overriding the image's node user
 volumes:
-  main: /data # accounts.yaml only; LND's main is read-only at /mnt/lnd
+  main: /data # accounts.yaml only; LND's public/admin is read-only at /mnt/lnd
 file_models:
   - accounts.yaml # masterPassword + the LND account; co-owned with the app
 startos_managed_env_vars:

@@ -22,8 +22,8 @@ export const main = sdk.setupMain(async ({ effects }) => {
     })
     .mountDependency<typeof lndManifest>({
       dependencyId: 'lnd',
-      volumeId: 'main',
-      subpath: null,
+      volumeId: 'public',
+      subpath: 'admin',
       mountpoint: lndMount,
       readonly: true,
     })
