@@ -2,8 +2,7 @@ import { FileHelper, z } from '@start9labs/start-sdk'
 import { sdk } from '../sdk'
 import { lndMount } from '../utils'
 
-const macaroonPath =
-  `${lndMount}/data/chain/bitcoin/mainnet/admin.macaroon` as const
+const macaroonPath = `${lndMount}/admin.macaroon` as const
 const certificatePath = `${lndMount}/tls.cert` as const
 
 // serverUrl is LND's gRPC endpoint on the LXC bridge, resolved and written by
